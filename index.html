@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Controller</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="jumbotron">
+      <h1 class="text-center">Controller</h1>
+    </div>
+    <div class="row">
+      <div class="col-sm-4"></div>
+      <div class="col-sm-4">
+        <button id="forward" type="button" class="btn btn-primary btn-lg btn-block" onclick="setState('forward')">Forward</button>
+      </div>
+      <div class="col-sm-4"></div>
+    </div>
+    <div class="row">
+      <div class="col-sm-4">
+        <button id="left" type="button" class="btn btn-primary btn-lg btn-block" onclick="setState('left')">Left</button>
+      </div>
+      <div class="col-sm-4">
+        <button id="stop" type="button" class="btn btn-danger btn-lg btn-block active" onclick="setState('stop')">Stop</button>
+      </div>
+      <div class="col-sm-4">
+        <button id="right" type="button" class="btn btn-primary btn-lg btn-block" onclick="setState('right')">Right</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-4"></div>
+      <div class="col-sm-4">
+        <button id="backward" type="button" class="btn btn-primary btn-lg btn-block" onclick="setState('backward')">Backward</button>
+      </div>
+      <div class="col-sm-4"></div>
+    </div>
+    <div class="row">
+      <button id="logtoogler" type="button" class="btn btn-lg btn-block" onclick="toogleLog()">Hide log</button>
+    </div>
+    <div class="row">
+      <div class="col-sm-12">
+        <pre id="log"></pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var activeButton = "stop";
+    var showLog = true;
+
+    function update() {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          writeLog("Updated, got: " + this.responseText);
+          setActiveButton(this.responseText);
+        }
+      };
+      xhttp.open("GET", "currentState.php", true);
+      xhttp.send();
+    }
+
+    function setState(state){
+      writeLog("Setting state to: " + state)
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          writeLog(this.responseText);
+        }
+      };
+      xhttp.open("GET", "setState.php?q=" + state, true);
+      xhttp.send();
+    }
+
+    function setActiveButton(buttonName){
+      var a = document.getElementById(activeButton);
+      a.classList.remove("active");
+      var b = document.getElementById(buttonName);
+      b.classList.add("active");
+      activeButton = buttonName;
+    }
+
+    function writeLog(msg){
+      document.getElementById("log").innerHTML += getTimestamp() + " " + msg + "\n";
+    }
+
+    function getTimestamp(){
+      var date = new Date();
+      var timestamp = "[";
+      timestamp += date.getFullYear();
+      timestamp += "-" + date.getMonth();
+      timestamp += "-" + date.getDate();
+      timestamp += "-" + date.getHours();
+      timestamp += ":" + date.getMinutes();
+      timestamp += ":" + date.getSeconds() + "]";
+      return timestamp;
+    }
+
+    function toogleLog(){
+      var logtoogler = document.getElementById("logtoogler");
+      var log = document.getElementById("log");
+      if(showLog){
+        log.classList.add("hidden");
+        logtoogler.innerHTML = "Show log";
+        showLog = false;
+      }
+      else{
+        log.classList.remove("hidden");
+        logtoogler.innerHTML = "Hide log";
+        showLog = true;
+      }
+    }
+
+    setInterval(update, 1000)
+  </script>
+
+</body>
+
+</html>
