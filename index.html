@@ -6,6 +6,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="style.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </head>
@@ -42,11 +43,29 @@
       <div class="col-sm-4"></div>
     </div>
     <div class="row">
+      <div class="col-md-6">
+        <div class="slidecontainer well">
+          <h3 class="text-center">Turn Speed Control
+            <span id="turnSpeedText"></span>
+          </h3>
+          <input type="range" min="1" max="100" value="1" class="slider" id="turnSpeedSlider">
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="slidecontainer well">
+          <h3 class="text-center">Movement Speed Control
+            <span id="movementSpeedText"></span>
+          </h3>
+          <input type="range" min="1" max="100" value="1" class="slider" id="movementSpeedSlider">
+        </div>
+      </div>
+    </div>
+    <div class="row">
       <button id="logtoogler" type="button" class="btn btn-lg btn-block" onclick="toogleLog()">Hide log</button>
     </div>
     <div class="row">
       <div class="col-sm-12">
-        <pre id="log"></pre>
+        <pre id="log" class="pre-scrollable"></pre>
       </div>
     </div>
   </div>
@@ -54,20 +73,27 @@
   <script>
     var activeButton = "stop";
     var showLog = true;
+    var movementSpeed = getMovementSpeed();
+    var turnSpeed = getTurnSpeed();
 
     function update() {
+      writeLog("Updating from server...")
       var xhttp = new XMLHttpRequest();
       xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-          writeLog("Updated, got: " + this.responseText);
+          writeLog("Updated!");
+          writeLog("State: " + this.responseText);
           setActiveButton(this.responseText);
         }
       };
       xhttp.open("GET", "currentState.php", true);
       xhttp.send();
+      
+      getMovementSpeed();
+      getTurnSpeed();
     }
 
-    function setState(state){
+    function setState(state) {
       writeLog("Setting state to: " + state)
       var xhttp = new XMLHttpRequest();
       xhttp.onreadystatechange = function () {
@@ -79,7 +105,7 @@
       xhttp.send();
     }
 
-    function setActiveButton(buttonName){
+    function setActiveButton(buttonName) {
       var a = document.getElementById(activeButton);
       a.classList.remove("active");
       var b = document.getElementById(buttonName);
@@ -87,11 +113,11 @@
       activeButton = buttonName;
     }
 
-    function writeLog(msg){
+    function writeLog(msg) {
       document.getElementById("log").innerHTML += getTimestamp() + " " + msg + "\n";
     }
 
-    function getTimestamp(){
+    function getTimestamp() {
       var date = new Date();
       var timestamp = "[";
       timestamp += date.getFullYear();
@@ -103,22 +129,109 @@
       return timestamp;
     }
 
-    function toogleLog(){
+    function toogleLog() {
       var logtoogler = document.getElementById("logtoogler");
       var log = document.getElementById("log");
-      if(showLog){
+      if (showLog) {
         log.classList.add("hidden");
         logtoogler.innerHTML = "Show log";
         showLog = false;
       }
-      else{
+      else {
         log.classList.remove("hidden");
         logtoogler.innerHTML = "Hide log";
         showLog = true;
       }
     }
+    function refreshSliders(){
+      if(movementSpeed != getMovementSpeedSlider()){
+        movementSpeed = getMovementSpeedSlider();
+        setMovementSpeedText(movementSpeed);
+        sendMovementSpeed(movementSpeed);
+      }
+      if(turnSpeed != getTurnSpeedSlider()){
+        turnSpeed = getTurnSpeedSlider();
+        setTurnSpeedText(turnSpeed);
+        sendTurnSpeed(turnSpeed);
+      }
+    }
+
+    function setMovementSpeedText(speed) {
+      speedText = document.getElementById("movementSpeedText");
+      speedText.innerHTML = speed + "%";
+    }
+
+    function setTurnSpeedText(speed) {
+      speedText = document.getElementById("turnSpeedText");
+      speedText.innerHTML = speed + "%";
+    }
+
+    function setMovementSpeed(speed) {
+      document.getElementById("movementSpeedSlider").value = speed;
+    }
+
+    function setTurnSpeed(speed){
+      document.getElementById("turnSpeedSlider").value = speed;
+    }
+
+    function getMovementSpeedSlider(){
+      return document.getElementById("movementSpeedSlider").value;
+    }
+
+    function getTurnSpeedSlider(){
+      return document.getElementById("turnSpeedSlider").value;
+    }
+
+    function sendMovementSpeed(speed){
+      writeLog("Sending movement speed...");
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          writeLog("Movement speed sent: " + this.responseText);
+        }
+      };
+      xhttp.open("GET", "setMovementSpeed.php?q=" + speed, true);
+      xhttp.send();
+    }
+
+    function sendTurnSpeed(speed){
+      writeLog("Sending turn speed...");
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          writeLog("Turn speed sent: " + this.responseText);
+        }
+      };
+      xhttp.open("GET", "setTurnSpeed.php?q=" + speed, true);
+      xhttp.send();
+    }
+
+    function getMovementSpeed(){
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          writeLog("Got movement speed from server: " + this.responseText);
+          setMovementSpeed(this.responseText);
+        }
+      };
+      xhttp.open("GET", "currentMovementSpeed.php", true);
+      xhttp.send();
+    }
+
+    function getTurnSpeed(){
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          writeLog("Got turn speed from server: " + this.responseText);
+          setTurnSpeed(this.responseText);
+        }
+      };
+      xhttp.open("GET", "currentTurnSpeed.php", true);
+      xhttp.send();
+    }
 
     setInterval(update, 1000)
+    setInterval(refreshSliders, 33)
   </script>
 
 </body>
