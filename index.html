@@ -20,25 +20,25 @@
     <div class="row">
       <div class="col-sm-4"></div>
       <div class="col-sm-4">
-        <button id="forward" type="button" class="btn btn-primary btn-lg btn-block" onclick="setState('forward')">Forward</button>
+        <button id="forward" type="button" class="btn btn-primary btn-lg btn-block" onclick="setDirection('forward')">Forward</button>
       </div>
       <div class="col-sm-4"></div>
     </div>
     <div class="row">
       <div class="col-sm-4">
-        <button id="left" type="button" class="btn btn-primary btn-lg btn-block" onclick="setState('left')">Left</button>
+        <button id="left" type="button" class="btn btn-primary btn-lg btn-block" onclick="setDirection('left')">Left</button>
       </div>
       <div class="col-sm-4">
-        <button id="stop" type="button" class="btn btn-danger btn-lg btn-block active" onclick="setState('stop')">Stop</button>
+        <button id="stop" type="button" class="btn btn-danger btn-lg btn-block active" onclick="setDirection('stop')">Stop</button>
       </div>
       <div class="col-sm-4">
-        <button id="right" type="button" class="btn btn-primary btn-lg btn-block" onclick="setState('right')">Right</button>
+        <button id="right" type="button" class="btn btn-primary btn-lg btn-block" onclick="setDirection('right')">Right</button>
       </div>
     </div>
     <div class="row">
       <div class="col-sm-4"></div>
       <div class="col-sm-4">
-        <button id="backward" type="button" class="btn btn-primary btn-lg btn-block" onclick="setState('backward')">Backward</button>
+        <button id="backward" type="button" class="btn btn-primary btn-lg btn-block" onclick="setDirection('backward')">Backward</button>
       </div>
       <div class="col-sm-4"></div>
     </div>
@@ -71,46 +71,41 @@
   </div>
 
   <script>
-    var activeButton = "stop";
     var showLog = true;
-    var movementSpeed = getMovementSpeed();
-    var turnSpeed = getTurnSpeed();
+    var input = {
+      direction:"stop",
+      movementSpeed:100,
+      turnSpeed:100
+    }
+    var inputChanged = false;
+    var activeButton = "stop";
 
     function update() {
       writeLog("Updating from server...")
       var xhttp = new XMLHttpRequest();
       xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-          writeLog("Updated!");
-          writeLog("State: " + this.responseText);
-          setActiveButton(this.responseText);
+          writeLog(this.responseText);
+          input = JSON.parse(this.responseText);
+          setActiveButton(input.direction);
+          setSliders();
+          setSliderText();
         }
       };
-      xhttp.open("GET", "currentState.php", true);
+      xhttp.open("GET", "getState.php", true);
       xhttp.send();
-      
-      getMovementSpeed();
-      getTurnSpeed();
     }
 
-    function setState(state) {
-      writeLog("Setting state to: " + state)
+    function sendInput() {
+      writeLog("Sending input to server...")
       var xhttp = new XMLHttpRequest();
       xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
           writeLog(this.responseText);
         }
       };
-      xhttp.open("GET", "setState.php?q=" + state, true);
+      xhttp.open("GET", "input.php" + formatPost(input), true);
       xhttp.send();
-    }
-
-    function setActiveButton(buttonName) {
-      var a = document.getElementById(activeButton);
-      a.classList.remove("active");
-      var b = document.getElementById(buttonName);
-      b.classList.add("active");
-      activeButton = buttonName;
     }
 
     function writeLog(msg) {
@@ -143,95 +138,67 @@
         showLog = true;
       }
     }
-    function refreshSliders(){
-      if(movementSpeed != getMovementSpeedSlider()){
-        movementSpeed = getMovementSpeedSlider();
-        setMovementSpeedText(movementSpeed);
-        sendMovementSpeed(movementSpeed);
+
+    function formatPost(obj) {
+      post = "?"
+      Object.keys(obj).forEach(function (key, index) {
+        post += key + "=" + obj[key] + "&";
+      });
+      return post;
+    }
+
+    function setDirection(str){
+      if(str != input.direction){
+        input.direction = str;
+        inputChanged = true;
       }
-      if(turnSpeed != getTurnSpeedSlider()){
-        turnSpeed = getTurnSpeedSlider();
-        setTurnSpeedText(turnSpeed);
-        sendTurnSpeed(turnSpeed);
+    }
+
+    function setActiveButton(s){
+      var a = document.getElementById(activeButton);
+      a.classList.remove("active");
+      var b = document.getElementById(s);
+      b.classList.add("active");
+      activeButton = s;
+    }
+
+    function setSliders(){
+      document.getElementById("movementSpeedSlider").value = input.movementSpeed;
+      document.getElementById("turnSpeedSlider").value = input.turnSpeed;
+    }
+
+    function getSliders(){
+      movementSpeedSlider = document.getElementById("movementSpeedSlider");
+      turnSpeedSlider = document.getElementById("turnSpeedSlider");
+      if(input.movementSpeed != movementSpeedSlider.value){
+        input.movementSpeed = movementSpeedSlider.value;
+        inputChanged = true;
+      }
+      if(input.turnSpeed != turnSpeedSlider.value){
+        input.turnSpeed = turnSpeedSlider.value;
+        inputChanged = true;
       }
     }
 
-    function setMovementSpeedText(speed) {
-      speedText = document.getElementById("movementSpeedText");
-      speedText.innerHTML = speed + "%";
+    function setSliderText(){
+      document.getElementById("movementSpeedText").innerHTML = input.movementSpeed;
+      document.getElementById("turnSpeedText").innerHTML = input.turnSpeed;
     }
 
-    function setTurnSpeedText(speed) {
-      speedText = document.getElementById("turnSpeedText");
-      speedText.innerHTML = speed + "%";
+    function refresh(){
+      getSliders();
+      setSliderText();
+      if(inputChanged){
+        sendInput();
+        oldInput = input;
+        inputChanged = false;
+      }
+      else{
+        update();
+      }
     }
 
-    function setMovementSpeed(speed) {
-      document.getElementById("movementSpeedSlider").value = speed;
-    }
-
-    function setTurnSpeed(speed){
-      document.getElementById("turnSpeedSlider").value = speed;
-    }
-
-    function getMovementSpeedSlider(){
-      return document.getElementById("movementSpeedSlider").value;
-    }
-
-    function getTurnSpeedSlider(){
-      return document.getElementById("turnSpeedSlider").value;
-    }
-
-    function sendMovementSpeed(speed){
-      writeLog("Sending movement speed...");
-      var xhttp = new XMLHttpRequest();
-      xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-          writeLog("Movement speed sent: " + this.responseText);
-        }
-      };
-      xhttp.open("GET", "setMovementSpeed.php?q=" + speed, true);
-      xhttp.send();
-    }
-
-    function sendTurnSpeed(speed){
-      writeLog("Sending turn speed...");
-      var xhttp = new XMLHttpRequest();
-      xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-          writeLog("Turn speed sent: " + this.responseText);
-        }
-      };
-      xhttp.open("GET", "setTurnSpeed.php?q=" + speed, true);
-      xhttp.send();
-    }
-
-    function getMovementSpeed(){
-      var xhttp = new XMLHttpRequest();
-      xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-          writeLog("Got movement speed from server: " + this.responseText);
-          setMovementSpeed(this.responseText);
-        }
-      };
-      xhttp.open("GET", "currentMovementSpeed.php", true);
-      xhttp.send();
-    }
-
-    function getTurnSpeed(){
-      var xhttp = new XMLHttpRequest();
-      xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-          writeLog("Got turn speed from server: " + this.responseText);
-          setTurnSpeed(this.responseText);
-        }
-      };
-      xhttp.open("GET", "currentTurnSpeed.php", true);
-      xhttp.send();
-    }
-
-    setInterval(update, 1000)
-    setInterval(refreshSliders, 33)
+    setInterval(refresh, 1000)
   </script>
 
 </body>
