@@ -9,8 +9,8 @@ var input = {
     direction: "stop",
     movementSpeed: 50,
     turnSpeed: 50,
-    lowColor: [0, 0, 0],
-    highColor: [255, 255, 255]
+    lowColor: "FFFFFF",
+    highColor: "FFFFFF"
 }
 var activeButton = "stop";
 
@@ -23,7 +23,8 @@ function getState() {
             input = JSON.parse(this.responseText);
             setActiveButton(input.direction);
             setSliders();
-            setInterval(sendInput, 100);
+            setColors();
+            setInterval(sendInput, 500);
         }
     };
     xhttp.open("GET", "getState.php", true);
@@ -102,7 +103,6 @@ function toogleElement(toogler) {
     var tooglerId = toogler.id;
     var elementId = tooglerId.substring(0, tooglerId.length - 7)
     var element = document.getElementById(elementId);
-    console.debug(elementId);
     if (elementVisibility[elementId]) {
         element.classList.add("hidden");
         toogler.classList.remove("active");
@@ -142,15 +142,18 @@ function setSliderText() {
     document.getElementById("turnSpeedText").innerHTML = input.turnSpeed;
 }
 
+function setColors(){
+    document.getElementById("lowcolorpicker").jscolor.fromString(input.lowColor)
+    document.getElementById("highcolorpicker").jscolor.fromString(input.highColor)
+}
+
 function getHighColor(picker) {
-    for (i = 0; i < 3; i++) {
-        input.highColor[i] = picker.hsv[i];
-    }
+    input.highColor = picker.toHEXString();
+    input.highColor = input.highColor.slice(1);
 }
 function getLowColor(picker) {
-    for (i = 0; i < 3; i++) {
-        input.lowColor[i] = picker.hsv[i];
-    }
+    input.lowColor = picker.toHEXString();
+    input.lowColor = input.lowColor.slice(1);
 }
 
 function refresh() {
