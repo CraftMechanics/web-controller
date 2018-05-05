@@ -20,6 +20,10 @@ function getState() {
     xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             writeLog(this.responseText);
+            input = JSON.parse(this.responseText);
+            setActiveButton(input.direction);
+            setSliders();
+            setInterval(sendInput, 100);
         }
     };
     xhttp.open("GET", "getState.php", true);
@@ -153,5 +157,6 @@ function refresh() {
     getSliders();
     setSliderText();
 }
+
 setInterval(refresh, 100);
-setInterval(sendInput, 100);
+getState();
