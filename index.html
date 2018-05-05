@@ -5,40 +5,43 @@
   <title>Controller</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style.css">
+  <!--Boostrap Dependencies-->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <!--Jscolor-->
   <script src="jscolor.js"></script>
-
+  <!--Custom-->
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-
   <div class="container">
     <div class="jumbotron">
       <h1 class="text-center">Controller</h1>
     </div>
     <div class="row">
       <div class="col-sm-4">
-        <button id="directionstoogler" type="button" class="btn btn-block active" onclick="toogleDirections()">Directions</button>
+        <button id="directionstoogler" type="button" class="btn btn-block active" onclick="toogleElement(this)">Directions</button>
       </div>
       <div class="col-sm-4">
-        <button id="sliderstoogler" type="button" class="btn btn-block active" onclick="toogleSliders()">Sliders</button>
+        <button id="sliderstoogler" type="button" class="btn btn-block active" onclick="toogleElement(this)">Sliders</button>
       </div>
       <div class="col-sm-4">
-        <button id="colorstoogler" type="button" class="btn btn-block" onclick="toogleColors()">Colors</button>
+        <button id="colorstoogler" type="button" class="btn btn-block" onclick="toogleElement(this)">Colors</button>
       </div>
     </div>
     <div id="colors" class="row hidden">
       <div class="col-sm-6">
         <div class="well text-center">
-          <h3>Low color</h3><input class="jscolor {position:'right',onFineChange:'getLowColor(this)'}" value="000000">
+          <h3>Low color</h3>
+          <input class="jscolor {onFineChange:'getLowColor(this)'}" value="000000">
         </div>
       </div>
       <div class="col-sm-6">
         <div class="well text-center">
-          <h3>High color</h3><input class="jscolor {position:'right',onFineChange:'getHighColor(this)'}" value="ffffff">
+          <h3>High color</h3>
+          <input class="jscolor {onFineChange:'getHighColor(this)'}" value="ffffff">
         </div>
       </div>
     </div>
@@ -107,16 +110,18 @@
 
   <script>
     var showLog = false;
-    var showDirections = true;
-    var showSliders = true;
-    var showColors = false;
     var enableLog = false;
+    var elementVisibility = {
+      directions: true,
+      sliders: true,
+      colors: false
+    }
     var input = {
       direction: "stop",
       movementSpeed: 50,
       turnSpeed: 50,
-      lowColor: "000000",
-      highColor: "ffffff"
+      lowColor: [0, 0, 0],
+      highColor: [255, 255, 255]
     }
     var activeButton = "stop";
 
@@ -131,7 +136,7 @@
       xhttp.open("GET", "getState.php", true);
       xhttp.send();
     }
-
+    
     function sendInput() {
       writeLog("Sending input to server...")
       var xhttp = new XMLHttpRequest();
@@ -143,13 +148,16 @@
       xhttp.open("GET", "input.php" + formatPost(input), true);
       xhttp.send();
     }
-
-    function writeLog(msg) {
-      if (enableLog) {
-        document.getElementById("log").innerHTML += getTimestamp() + " " + msg + "\n";
-      }
+    
+    
+    function formatPost(obj) {
+      post = "?"
+      Object.keys(obj).forEach(function (key, index) {
+        post += key + "=" + obj[key] + "&";
+      });
+      return post;
     }
-
+    
     function getTimestamp() {
       var date = new Date();
       var timestamp = "[";
@@ -161,7 +169,12 @@
       timestamp += ":" + date.getSeconds() + "]";
       return timestamp;
     }
-
+    
+    function writeLog(msg) {
+      if (enableLog) {
+        document.getElementById("log").innerHTML += getTimestamp() + " " + msg + "\n";
+      }
+    }
     function toogleLog() {
       var logtoogler = document.getElementById("logtoogler");
       var log = document.getElementById("log");
@@ -176,7 +189,6 @@
         showLog = true;
       }
     }
-
     function switchLog() {
       var logSwitcher = document.getElementById("logswitcher");
       if (enableLog) {
@@ -188,51 +200,29 @@
         logSwitcher.innerHTML = "Dissable log";
       }
     }
-
-    function toogleDirections() {
-      toogleElement("directions", "directionstoogler", showDirections);
-      if(showDirections) showDirections = false;
-      else showDirections = true;
-    }
-
-    function toogleSliders() {
-      toogleElement("sliders", "sliderstoogler", showSliders);
-      if(showSliders) showSliders = false;
-      else showSliders = true;
-    }
-
-    function toogleColors() {
-      toogleElement("colors", "colorstoogler", showColors);
-      if(showColors) showColors = false;
-      else showColors = true;
-    }
-
-    function toogleElement(elementId, buttonId, state){
-      var element = document.getElementById(elementId);
-      var button = document.getElementById(buttonId);
-      if(state){
-        element.classList.add("hidden");
-        button.classList.remove("active");
-      }
-      else{
-        element.classList.remove("hidden");
-        button.classList.add("active");
-      }
-    }
-
     function clearLog() {
       var log = document.getElementById("log");
       log.innerHTML = "";
     }
-
-    function formatPost(obj) {
-      post = "?"
-      Object.keys(obj).forEach(function (key, index) {
-        post += key + "=" + obj[key] + "&";
-      });
-      return post;
+    
+    function toogleElement(toogler) {
+      var tooglerId = toogler.id;
+      var elementId = tooglerId.substring(0, tooglerId.length - 7)
+      var element = document.getElementById(elementId);
+      console.debug(elementId);
+      if (elementVisibility[elementId]) {
+        element.classList.add("hidden");
+        toogler.classList.remove("active");
+        elementVisibility[elementId] = false;
+        
+      }
+      else {
+        element.classList.remove("hidden");
+        toogler.classList.add("active");
+        elementVisibility[elementId] = true;
+      }
     }
-
+    
     function setDirection(str) {
       input.direction = str;
       setActiveButton(str);
@@ -250,25 +240,24 @@
       document.getElementById("movementSpeedSlider").value = input.movementSpeed;
       document.getElementById("turnSpeedSlider").value = input.turnSpeed;
     }
-
     function getSliders() {
       input.movementSpeed = document.getElementById("movementSpeedSlider").value;
       input.turnSpeed = document.getElementById("turnSpeedSlider").value;
     }
-
     function setSliderText() {
       document.getElementById("movementSpeedText").innerHTML = input.movementSpeed;
       document.getElementById("turnSpeedText").innerHTML = input.turnSpeed;
     }
 
-    function getHighColor(picker){
-      var hex = picker.toHEXString();
-      input.highColor = hex;
+    function getHighColor(picker) {
+      for (i = 0; i < 3; i++) {
+        input.highColor[i] = picker.hsv[i];
+      }
     }
-
-    function getLowColor(picker){
-      var hex = picker.toHEXString();
-      input.lowColor = "wooo";
+    function getLowColor(picker) {
+      for (i = 0; i < 3; i++) {
+        input.lowColor[i] = picker.hsv[i];
+      }
     }
 
     function refresh() {
