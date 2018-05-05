@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="jscolor.js"></script>
+
 </head>
 
 <body>
@@ -18,78 +20,112 @@
       <h1 class="text-center">Controller</h1>
     </div>
     <div class="row">
-      <div class="col-sm-4"></div>
       <div class="col-sm-4">
-        <button id="forward" type="button" class="btn btn-primary btn-lg btn-block" onclick="setDirection('forward')">Forward</button>
-      </div>
-      <div class="col-sm-4"></div>
-    </div>
-    <div class="row">
-      <div class="col-sm-4">
-        <button id="left" type="button" class="btn btn-primary btn-lg btn-block" onclick="setDirection('left')">Left</button>
+        <button id="directionstoogler" type="button" class="btn btn-block active" onclick="toogleDirections()">Directions</button>
       </div>
       <div class="col-sm-4">
-        <button id="stop" type="button" class="btn btn-danger btn-lg btn-block active" onclick="setDirection('stop')">Stop</button>
+        <button id="sliderstoogler" type="button" class="btn btn-block active" onclick="toogleSliders()">Sliders</button>
       </div>
       <div class="col-sm-4">
-        <button id="right" type="button" class="btn btn-primary btn-lg btn-block" onclick="setDirection('right')">Right</button>
+        <button id="colorstoogler" type="button" class="btn btn-block" onclick="toogleColors()">Colors</button>
       </div>
     </div>
-    <div class="row">
-      <div class="col-sm-4"></div>
-      <div class="col-sm-4">
-        <button id="backward" type="button" class="btn btn-primary btn-lg btn-block" onclick="setDirection('backward')">Backward</button>
+    <div id="colors" class="row hidden">
+      <div class="col-sm-6">
+        <div class="well text-center">
+          <h3>Low color</h3><input class="jscolor {position:'right',onFineChange:'getLowColor(this)'}" value="000000">
+        </div>
       </div>
-      <div class="col-sm-4"></div>
+      <div class="col-sm-6">
+        <div class="well text-center">
+          <h3>High color</h3><input class="jscolor {position:'right',onFineChange:'getHighColor(this)'}" value="ffffff">
+        </div>
+      </div>
     </div>
-    <div class="row">
-      <div class="col-md-6">
+    <div id="directions">
+      <div class="row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-4">
+          <button id="forward" type="button" class="btn btn-primary btn-lg btn-block" onclick="setDirection('forward')">Forward</button>
+        </div>
+        <div class="col-sm-4"></div>
+      </div>
+      <div class="row">
+        <div class="col-sm-4">
+          <button id="left" type="button" class="btn btn-primary btn-lg btn-block" onclick="setDirection('left')">Left</button>
+        </div>
+        <div class="col-sm-4">
+          <button id="stop" type="button" class="btn btn-danger btn-lg btn-block active" onclick="setDirection('stop')">Stop</button>
+        </div>
+        <div class="col-sm-4">
+          <button id="right" type="button" class="btn btn-primary btn-lg btn-block" onclick="setDirection('right')">Right</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-4">
+          <button id="backward" type="button" class="btn btn-primary btn-lg btn-block" onclick="setDirection('backward')">Backward</button>
+        </div>
+        <div class="col-sm-4"></div>
+      </div>
+    </div>
+    <div id="sliders" class="row">
+      <div class="col-sm-6">
         <div class="slidecontainer well">
           <h3 class="text-center">Turn Speed Control
             <span id="turnSpeedText"></span>
           </h3>
-          <input type="range" min="1" max="100" value="1" class="slider" id="turnSpeedSlider">
+          <input type="range" min="1" max="100" value="50" class="slider" id="turnSpeedSlider">
         </div>
       </div>
-      <div class="col-md-6">
+      <div class="col-sm-6">
         <div class="slidecontainer well">
           <h3 class="text-center">Movement Speed Control
             <span id="movementSpeedText"></span>
           </h3>
-          <input type="range" min="1" max="100" value="1" class="slider" id="movementSpeedSlider">
+          <input type="range" min="1" max="100" value="50" class="slider" id="movementSpeedSlider">
         </div>
       </div>
     </div>
     <div class="row">
-      <button id="logtoogler" type="button" class="btn btn-lg btn-block" onclick="toogleLog()">Hide log</button>
+      <div class="col-sm-4">
+        <button id="logtoogler" type="button" class="btn btn-lg btn-block" onclick="toogleLog()">Show log</button>
+      </div>
+      <div class="col-sm-4">
+        <button type="button" class="btn btn-lg btn-block" onclick="clearLog()">Clear log</button>
+      </div>
+      <div class="col-sm-4">
+        <button id="logswitcher" type="button" class="btn btn-lg btn-block" onclick="switchLog()">Enable log</button>
+      </div>
     </div>
     <div class="row">
       <div class="col-sm-12">
-        <pre id="log" class="pre-scrollable"></pre>
+        <pre id="log" class="pre-scrollable hidden"></pre>
       </div>
     </div>
   </div>
 
   <script>
-    var showLog = true;
+    var showLog = false;
+    var showDirections = true;
+    var showSliders = true;
+    var showColors = false;
+    var enableLog = false;
     var input = {
-      direction:"stop",
-      movementSpeed:100,
-      turnSpeed:100
+      direction: "stop",
+      movementSpeed: 50,
+      turnSpeed: 50,
+      lowColor: "000000",
+      highColor: "ffffff"
     }
-    var inputChanged = false;
     var activeButton = "stop";
 
-    function update() {
-      writeLog("Updating from server...")
+    function getState() {
+      writeLog("Getting state from server...")
       var xhttp = new XMLHttpRequest();
       xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
           writeLog(this.responseText);
-          input = JSON.parse(this.responseText);
-          setActiveButton(input.direction);
-          setSliders();
-          setSliderText();
         }
       };
       xhttp.open("GET", "getState.php", true);
@@ -109,7 +145,9 @@
     }
 
     function writeLog(msg) {
-      document.getElementById("log").innerHTML += getTimestamp() + " " + msg + "\n";
+      if (enableLog) {
+        document.getElementById("log").innerHTML += getTimestamp() + " " + msg + "\n";
+      }
     }
 
     function getTimestamp() {
@@ -139,6 +177,54 @@
       }
     }
 
+    function switchLog() {
+      var logSwitcher = document.getElementById("logswitcher");
+      if (enableLog) {
+        enableLog = false;
+        logSwitcher.innerHTML = "Enable log";
+      }
+      else {
+        enableLog = true;
+        logSwitcher.innerHTML = "Dissable log";
+      }
+    }
+
+    function toogleDirections() {
+      toogleElement("directions", "directionstoogler", showDirections);
+      if(showDirections) showDirections = false;
+      else showDirections = true;
+    }
+
+    function toogleSliders() {
+      toogleElement("sliders", "sliderstoogler", showSliders);
+      if(showSliders) showSliders = false;
+      else showSliders = true;
+    }
+
+    function toogleColors() {
+      toogleElement("colors", "colorstoogler", showColors);
+      if(showColors) showColors = false;
+      else showColors = true;
+    }
+
+    function toogleElement(elementId, buttonId, state){
+      var element = document.getElementById(elementId);
+      var button = document.getElementById(buttonId);
+      if(state){
+        element.classList.add("hidden");
+        button.classList.remove("active");
+      }
+      else{
+        element.classList.remove("hidden");
+        button.classList.add("active");
+      }
+    }
+
+    function clearLog() {
+      var log = document.getElementById("log");
+      log.innerHTML = "";
+    }
+
     function formatPost(obj) {
       post = "?"
       Object.keys(obj).forEach(function (key, index) {
@@ -147,14 +233,12 @@
       return post;
     }
 
-    function setDirection(str){
-      if(str != input.direction){
-        input.direction = str;
-        inputChanged = true;
-      }
+    function setDirection(str) {
+      input.direction = str;
+      setActiveButton(str);
     }
 
-    function setActiveButton(s){
+    function setActiveButton(s) {
       var a = document.getElementById(activeButton);
       a.classList.remove("active");
       var b = document.getElementById(s);
@@ -162,43 +246,37 @@
       activeButton = s;
     }
 
-    function setSliders(){
+    function setSliders() {
       document.getElementById("movementSpeedSlider").value = input.movementSpeed;
       document.getElementById("turnSpeedSlider").value = input.turnSpeed;
     }
 
-    function getSliders(){
-      movementSpeedSlider = document.getElementById("movementSpeedSlider");
-      turnSpeedSlider = document.getElementById("turnSpeedSlider");
-      if(input.movementSpeed != movementSpeedSlider.value){
-        input.movementSpeed = movementSpeedSlider.value;
-        inputChanged = true;
-      }
-      if(input.turnSpeed != turnSpeedSlider.value){
-        input.turnSpeed = turnSpeedSlider.value;
-        inputChanged = true;
-      }
+    function getSliders() {
+      input.movementSpeed = document.getElementById("movementSpeedSlider").value;
+      input.turnSpeed = document.getElementById("turnSpeedSlider").value;
     }
 
-    function setSliderText(){
+    function setSliderText() {
       document.getElementById("movementSpeedText").innerHTML = input.movementSpeed;
       document.getElementById("turnSpeedText").innerHTML = input.turnSpeed;
     }
 
-    function refresh(){
-      getSliders();
-      setSliderText();
-      if(inputChanged){
-        sendInput();
-        oldInput = input;
-        inputChanged = false;
-      }
-      else{
-        update();
-      }
+    function getHighColor(picker){
+      var hex = picker.toHEXString();
+      input.highColor = hex;
     }
 
-    setInterval(refresh, 1000)
+    function getLowColor(picker){
+      var hex = picker.toHEXString();
+      input.lowColor = "wooo";
+    }
+
+    function refresh() {
+      getSliders();
+      setSliderText();
+    }
+    setInterval(refresh, 100);
+    setInterval(sendInput, 100);
   </script>
 
 </body>
